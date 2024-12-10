@@ -1,5 +1,6 @@
 package com.example.demo.service.impl;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,6 +16,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 
 	private EmployeeRepository employeeRepository;
 
+	// disini secara default ada autowired sehingga repository otomatis terinjeksi
+	// ke service
 	public EmployeeServiceImpl(EmployeeRepository employeeRepository) {
 		super();
 		this.employeeRepository = employeeRepository;
@@ -27,9 +30,21 @@ public class EmployeeServiceImpl implements EmployeeService {
 	}
 
 	@Override
-	public List<Employee> getAllEmployee() {
+	public List<Employee> getAllEmployee(String sortBy) {
 		// TODO Auto-generated method stub
-		return employeeRepository.findAll();
+
+		switch (sortBy) {
+		case "firstName":
+			// return sorted by newest data
+			return employeeRepository.findAll().stream().sorted(Comparator.comparing(Employee::getFirstName)).toList();
+		case "createdAt":
+			// return sorted by newest data
+			return employeeRepository.findAll().stream().sorted(Comparator.comparing(Employee::getCreatedAt).reversed())
+					.toList();
+		default:
+			return employeeRepository.findAll(); // Return unsorted list if no match
+		}
+
 	}
 
 	@Override
@@ -58,6 +73,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 		existingEmployee.setFirstName(employee.getFirstName());
 		existingEmployee.setLastName(employee.getLastName());
 		existingEmployee.setEmail(employee.getEmail());
+		existingEmployee.setStatus(employee.isStatus());
+		existingEmployee.setCreatedAt(employee.getCreatedAt());
 
 		employeeRepository.save(existingEmployee);
 

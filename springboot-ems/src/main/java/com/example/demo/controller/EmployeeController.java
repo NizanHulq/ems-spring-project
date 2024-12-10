@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.model.Employee;
@@ -35,9 +36,13 @@ public class EmployeeController {
 
 	// build get all employee Rest API
 	@GetMapping
-	public List<Employee> getAllEmployee() {
-		return employeeService.getAllEmployee();
-	}
+	public ResponseEntity<List<Employee>> getAllEmployees(@RequestParam(required = false) String sortBy) {
+        List<Employee> employees = employeeService.getAllEmployee(sortBy != null ? sortBy : "");
+        return ResponseEntity.ok(employees);
+    }
+//	public List<Employee> getAllEmployee() {
+//		return employeeService.getAllEmployee();
+//	}
 	
 	// build get employee by id Rest API
 	
