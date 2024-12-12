@@ -7,26 +7,77 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.example.demo.exception.ResourceNotFoundException;
+import com.example.demo.model.Department;
 import com.example.demo.model.Employee;
+import com.example.demo.model.EmployeeAddress;
+import com.example.demo.model.Project;
+import com.example.demo.model.dto.EmployeeRequest;
+import com.example.demo.repository.DepartmentRepository;
+import com.example.demo.repository.EmployeeAddressRepository;
 import com.example.demo.repository.EmployeeRepository;
+import com.example.demo.repository.ProjectRepository;
 import com.example.demo.service.EmployeeService;
 
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
 
 	private EmployeeRepository employeeRepository;
+	private EmployeeAddressRepository employeeAddressRepository;
+	private ProjectRepository projectRepository;
+	private DepartmentRepository departmentRepository;
 
 	// disini secara default ada autowired sehingga repository otomatis terinjeksi
 	// ke service
-	public EmployeeServiceImpl(EmployeeRepository employeeRepository) {
+	public EmployeeServiceImpl(EmployeeRepository employeeRepository, 
+			EmployeeAddressRepository employeeAddressRepository, 
+			ProjectRepository projectRepository,
+			DepartmentRepository departmentRepository) {
 		super();
 		this.employeeRepository = employeeRepository;
+		this.employeeAddressRepository = employeeAddressRepository;
+        this.projectRepository = projectRepository;
+        this.departmentRepository = departmentRepository;
 	}
 
 	@Override
-	public Employee saveEmployee(Employee employee) {
-		// TODO Auto-generated method stub
-		return employeeRepository.save(employee);
+	public Employee saveEmployee(EmployeeRequest employeeRequest) {
+			
+		
+		// Fetch the related project
+	    Project project = projectRepository.findById(employeeRequest.getProjectId())
+	        .orElseThrow(() -> new ResourceNotFoundException("Project", "Id", employeeRequest.getProjectId()));
+
+	    // Fetch the related department
+	    Department department = departmentRepository.findById(employeeRequest.getDepartmentId())
+	        .orElseThrow(() -> new ResourceNotFoundException("Department", "Id", employeeRequest.getDepartmentId()));
+
+	    Employee employee = new Employee(employeeRequest.getFirstName(), 
+				employeeRequest.getLastName(),
+				employeeRequest.getEmail(),
+				employeeRequest.isStatus(),
+				employeeRequest.getCreatedAt(),
+				department
+				);
+
+		    // Create EmployeeAddress from the request
+		    EmployeeAddress address = new EmployeeAddress(
+		        employeeRequest.getAddress().getStreet(),
+		        employeeRequest.getAddress().getCity(),
+		        employeeRequest.getAddress().getState(),
+		        employeeRequest.getAddress().getPostalCode(),
+		        employee
+		    );
+	    
+	    // Set relationships
+	    employee.getProjects().add(project); // Assuming Many-to-Many
+	    employee.setDepartment(department); // Assuming Many-to-One
+	    address.setEmployee(employee);
+	    employee.setAddress(address);
+
+	    // Save employee and address
+	    Employee result = employeeRepository.save(employee);
+	    employeeAddressRepository.save(address);
+	    return result;
 	}
 
 	@Override
@@ -50,13 +101,6 @@ public class EmployeeServiceImpl implements EmployeeService {
 	@Override
 	public Employee getEmployeeById(long id) {
 		// TODO Auto-generated method stub
-//		Optional<Employee> employee = employeeRepository.findById(id);
-//		
-//		if(employee.isPresent()) {
-//			return employee.get();
-//		} else {
-//			throw new ResourceNotFoundException("Employee", "id", id);
-//		}
 
 		// this is using lambda expression
 		return employeeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Employee", "Id", id));

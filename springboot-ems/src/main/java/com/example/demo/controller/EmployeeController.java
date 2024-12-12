@@ -14,7 +14,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.demo.exception.ResourceNotFoundException;
+import com.example.demo.model.Department;
 import com.example.demo.model.Employee;
+import com.example.demo.model.EmployeeAddress;
+import com.example.demo.model.dto.EmployeeRequest;
+import com.example.demo.repository.DepartmentRepository;
 import com.example.demo.service.EmployeeService;
 
 @RestController
@@ -30,8 +35,15 @@ public class EmployeeController {
 
 	// build create employee Rest API
 	@PostMapping
-	public ResponseEntity<Employee> saveEmployee(@RequestBody Employee employee) {
-		return new ResponseEntity<Employee>(employeeService.saveEmployee(employee), HttpStatus.CREATED);
+	public ResponseEntity<Employee> saveEmployee(@RequestBody EmployeeRequest employeeRequest) {
+
+		    // Save the employee with department, project, and address
+		    Employee savedEmployee = employeeService.saveEmployee(
+		        employeeRequest
+		    );
+
+		    return new ResponseEntity<>(savedEmployee, HttpStatus.CREATED);
+
 	}
 
 	// build get all employee Rest API

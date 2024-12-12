@@ -1,18 +1,24 @@
 package com.example.demo.model;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import org.hibernate.annotations.CreationTimestamp;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
 
@@ -43,15 +49,33 @@ public class Employee {
     @Column(name = "status", nullable = false)
     private boolean status;
     
-//    @ManyToOne
-//    @JoinColumn(name = "department_id", nullable = false) // ini masih bermasalah karena sudah ada data sebelumnya
-//    private Department department;
-//    
-//    @ManyToMany(mappedBy = "employees")
-//    private Set<Project> projects;
+    @ManyToOne
+    @JoinColumn(name = "department_id", nullable = true)
+    private Department department;
     
-    public Employee() {
-        this.createdAt = LocalDateTime.now(); // Default ke waktu sekarang
-        this.status = true; // Default ke status aktif
+    @ManyToMany(mappedBy = "employees")
+//    @JoinTable(
+//    	    name = "employee_project",
+//    	    joinColumns = @JoinColumn(name = "employee_id"),
+//    	    inverseJoinColumns = @JoinColumn(name = "project_id")
+//    	)
+//    private Set<Project> projects;	
+    private List<Project> projects = new ArrayList<>();
+    
+    @OneToOne(mappedBy = "employee", cascade = CascadeType.ALL, orphanRemoval = true)
+    private EmployeeAddress address;
+
+//    public Employee() {
+//        this.createdAt = LocalDateTime.now(); // Default ke waktu sekarang
+//        this.status = true; // Default ke status aktif
+//    }
+    
+    public Employee(String firstName, String lastName, String email, boolean status, LocalDateTime createdAt, Department department) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.status = status;
+        this.createdAt = LocalDateTime.now();
+        this.department = department;
     }
 }
