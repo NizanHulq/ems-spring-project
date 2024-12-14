@@ -6,7 +6,7 @@ import lombok.*;
 import java.time.LocalDate;
 
 @Data
-@NoArgsConstructor // Tambahkan default constructor
+// Tambahkan default constructor
 @AllArgsConstructor
 @Entity
 @Table(name = "departments")
@@ -24,6 +24,9 @@ public class Department {
     @Column(nullable = false)
     private LocalDate foundedDate;
 
+    public Department() {
+    }
+    
     // Tambahkan constructor tanpa id untuk memudahkan seeding
     public Department(String name, Double budget, LocalDate foundedDate) {
         this.name = name;

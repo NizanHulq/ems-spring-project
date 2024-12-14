@@ -1,16 +1,20 @@
 package com.example.demo.service.impl;
 
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 //import java.util.Optional;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
 import com.example.demo.exception.ResourceNotFoundException;
+import com.example.demo.mapper.EmployeeMapper;
 import com.example.demo.model.Department;
 import com.example.demo.model.Employee;
 import com.example.demo.model.EmployeeAddress;
 import com.example.demo.model.Project;
+import com.example.demo.model.dto.EmployeeDTO;
 import com.example.demo.model.dto.EmployeeRequest;
 import com.example.demo.repository.DepartmentRepository;
 import com.example.demo.repository.EmployeeAddressRepository;
@@ -40,7 +44,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 	}
 
 	@Override
-	public Employee saveEmployee(EmployeeRequest employeeRequest) {
+	public EmployeeDTO saveEmployee(EmployeeRequest employeeRequest) {
 			
 		
 		// Fetch the related project
@@ -55,7 +59,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 				employeeRequest.getLastName(),
 				employeeRequest.getEmail(),
 				employeeRequest.isStatus(),
-				employeeRequest.getCreatedAt(),
+				LocalDateTime.now(),
 				department
 				);
 
@@ -75,35 +79,60 @@ public class EmployeeServiceImpl implements EmployeeService {
 	    employee.setAddress(address);
 
 	    // Save employee and address
-	    Employee result = employeeRepository.save(employee);
+	    Employee savedEmployee = employeeRepository.save(employee);
 	    employeeAddressRepository.save(address);
-	    return result;
+	    
+	    return new EmployeeDTO(
+	    		savedEmployee.getId(),
+                savedEmployee.getFirstName(),
+                savedEmployee.getLastName(),
+                savedEmployee.getEmail(),
+                savedEmployee.isStatus(),
+                savedEmployee.getCreatedAt(),
+                department.getName()
+	    		);
 	}
 
 	@Override
-	public List<Employee> getAllEmployee(String sortBy) {
+	public List<EmployeeDTO> getAllEmployee(String sortBy) {
 		// TODO Auto-generated method stub
-
+		List<Employee> employees;
+		
 		switch (sortBy) {
 		case "firstName":
 			// return sorted by newest data
-			return employeeRepository.findAll().stream().sorted(Comparator.comparing(Employee::getFirstName)).toList();
+			employees = employeeRepository.findAll().stream().sorted(Comparator.comparing(Employee::getFirstName)).toList();
 		case "createdAt":
 			// return sorted by newest data
-			return employeeRepository.findAll().stream().sorted(Comparator.comparing(Employee::getCreatedAt).reversed())
+			employees = employeeRepository.findAll().stream().sorted(Comparator.comparing(Employee::getCreatedAt).reversed())
 					.toList();
 		default:
-			return employeeRepository.findAll(); // Return unsorted list if no match
+			employees = employeeRepository.findAll(); // Return unsorted list if no match
 		}
+		
+		return employees.stream().map(EmployeeMapper::toEmployeeDTO).toList();
 
 	}
 
 	@Override
-	public Employee getEmployeeById(long id) {
+	public EmployeeDTO getEmployeeById(long id) {
 		// TODO Auto-generated method stub
 
-		// this is using lambda expression
-		return employeeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Employee", "Id", id));
+		Employee savedEmployee = employeeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Employee", "Id", id));
+		String departmentName = Optional.ofNullable(savedEmployee.getDepartment())
+                .map(Department::getName)
+                .orElse("No Department");
+		
+		return new EmployeeDTO(
+				savedEmployee.getId(),
+                savedEmployee.getFirstName(),
+                savedEmployee.getLastName(),
+                savedEmployee.getEmail(),
+                savedEmployee.isStatus(),
+                savedEmployee.getCreatedAt(),
+                departmentName
+				);
+				
 	}
 
 	@Override
