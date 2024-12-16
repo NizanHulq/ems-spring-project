@@ -69,7 +69,8 @@ public class Employee {
 //        this.createdAt = LocalDateTime.now(); // Default ke waktu sekarang
 //        this.status = true; // Default ke status aktif
 //    }
-    
+    public Employee() {
+    }
     public Employee(String firstName, String lastName, String email, boolean status, LocalDateTime createdAt, Department department) {
         this.firstName = firstName;
         this.lastName = lastName;

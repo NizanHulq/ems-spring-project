@@ -18,6 +18,7 @@ import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.model.Department;
 import com.example.demo.model.Employee;
 import com.example.demo.model.EmployeeAddress;
+import com.example.demo.model.dto.EmployeeDTO;
 import com.example.demo.model.dto.EmployeeRequest;
 import com.example.demo.repository.DepartmentRepository;
 import com.example.demo.service.EmployeeService;
@@ -35,10 +36,10 @@ public class EmployeeController {
 
 	// build create employee Rest API
 	@PostMapping
-	public ResponseEntity<Employee> saveEmployee(@RequestBody EmployeeRequest employeeRequest) {
+	public ResponseEntity<EmployeeDTO> saveEmployee(@RequestBody EmployeeRequest employeeRequest) {
 
 		    // Save the employee with department, project, and address
-		    Employee savedEmployee = employeeService.saveEmployee(
+		    EmployeeDTO savedEmployee = employeeService.saveEmployee(
 		        employeeRequest
 		    );
 
@@ -48,8 +49,8 @@ public class EmployeeController {
 
 	// build get all employee Rest API
 	@GetMapping
-	public ResponseEntity<List<Employee>> getAllEmployees(@RequestParam(required = false) String sortBy) {
-        List<Employee> employees = employeeService.getAllEmployee(sortBy != null ? sortBy : "");
+	public ResponseEntity<List<EmployeeDTO>> getAllEmployees(@RequestParam(required = false) String sortBy) {
+        List<EmployeeDTO> employees = employeeService.getAllEmployee(sortBy != null ? sortBy : "");
         return ResponseEntity.ok(employees);
     }
 //	public List<Employee> getAllEmployee() {
@@ -59,8 +60,8 @@ public class EmployeeController {
 	// build get employee by id Rest API
 	
 	@GetMapping("{id}")
-	public ResponseEntity<Employee> getEmployeeById(@PathVariable(name = "id") long id){
-		return new ResponseEntity<Employee>(employeeService.getEmployeeById(id),HttpStatus.OK);
+	public ResponseEntity<EmployeeDTO> getEmployeeById(@PathVariable(name = "id") long id){
+		return new ResponseEntity<EmployeeDTO>(employeeService.getEmployeeById(id),HttpStatus.OK);
 	}
 	
 	// build update employee Rest API
