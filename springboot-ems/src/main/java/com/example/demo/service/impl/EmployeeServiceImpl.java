@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 //import java.util.Optional;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,7 @@ import com.example.demo.model.EmployeeAddress;
 import com.example.demo.model.Project;
 import com.example.demo.model.dto.EmployeeDTO;
 import com.example.demo.model.dto.EmployeeRequest;
+import com.example.demo.model.dto.ProjectDTO;
 import com.example.demo.repository.DepartmentRepository;
 import com.example.demo.repository.EmployeeAddressRepository;
 import com.example.demo.repository.EmployeeRepository;
@@ -32,84 +34,79 @@ public class EmployeeServiceImpl implements EmployeeService {
 
 	// disini secara default ada autowired sehingga repository otomatis terinjeksi
 	// ke service
-	public EmployeeServiceImpl(EmployeeRepository employeeRepository, 
-			EmployeeAddressRepository employeeAddressRepository, 
-			ProjectRepository projectRepository,
+	public EmployeeServiceImpl(EmployeeRepository employeeRepository,
+			EmployeeAddressRepository employeeAddressRepository, ProjectRepository projectRepository,
 			DepartmentRepository departmentRepository) {
 		super();
 		this.employeeRepository = employeeRepository;
 		this.employeeAddressRepository = employeeAddressRepository;
-        this.projectRepository = projectRepository;
-        this.departmentRepository = departmentRepository;
+		this.projectRepository = projectRepository;
+		this.departmentRepository = departmentRepository;
 	}
 
 	@Override
 	public EmployeeDTO saveEmployee(EmployeeRequest employeeRequest) {
-			
-		
+
 		// Fetch the related project
-	    Project project = projectRepository.findById(employeeRequest.getProjectId())
-	        .orElseThrow(() -> new ResourceNotFoundException("Project", "Id", employeeRequest.getProjectId()));
+		List<Project> projects = projectRepository.findAllById(employeeRequest.getProjectIds());
+		List<ProjectDTO> projectDTOs = projects.stream()
+                .map(project -> new ProjectDTO(
+                		project.getId(),
+                		project.getName(),
+                		project.getDescription(),
+                		project.getStartDate(),
+                		project.getEndDate()
+                		))
+                .collect(Collectors.toList());
 
-	    // Fetch the related department
-	    Department department = departmentRepository.findById(employeeRequest.getDepartmentId())
-	        .orElseThrow(() -> new ResourceNotFoundException("Department", "Id", employeeRequest.getDepartmentId()));
+		// Fetch the related department
+		Department department = departmentRepository.findById(employeeRequest.getDepartmentId()).orElseThrow(
+				() -> new ResourceNotFoundException("Department", "Id", employeeRequest.getDepartmentId()));
 
-	    Employee employee = new Employee(employeeRequest.getFirstName(), 
-				employeeRequest.getLastName(),
-				employeeRequest.getEmail(),
-				employeeRequest.isStatus(),
-				LocalDateTime.now(),
-				department
-				);
+		Employee employee = new Employee(employeeRequest.getFirstName(), employeeRequest.getLastName(),
+				employeeRequest.getEmail(), employeeRequest.isStatus(), LocalDateTime.now(), department);
 
-		    // Create EmployeeAddress from the request
-		    EmployeeAddress address = new EmployeeAddress(
-		        employeeRequest.getAddress().getStreet(),
-		        employeeRequest.getAddress().getCity(),
-		        employeeRequest.getAddress().getState(),
-		        employeeRequest.getAddress().getPostalCode(),
-		        employee
-		    );
+		// Create EmployeeAddress from the request
+		EmployeeAddress address = new EmployeeAddress(employeeRequest.getAddress().getStreet(),
+				employeeRequest.getAddress().getCity(), employeeRequest.getAddress().getState(),
+				employeeRequest.getAddress().getPostalCode(), employee);
+
+		// Set relationships
+		employee.setProjects(projects);
+		// Add the employee to each project's employee list
+	    projects.forEach(project -> project.getEmployees().add(employee));
 	    
-	    // Set relationships
-	    employee.getProjects().add(project); // Assuming Many-to-Many
-	    employee.setDepartment(department); // Assuming Many-to-One
-	    address.setEmployee(employee);
-	    employee.setAddress(address);
 
-	    // Save employee and address
-	    Employee savedEmployee = employeeRepository.save(employee);
-	    employeeAddressRepository.save(address);
-	    
-	    return new EmployeeDTO(
-	    		savedEmployee.getId(),
-                savedEmployee.getFirstName(),
-                savedEmployee.getLastName(),
-                savedEmployee.getEmail(),
-                savedEmployee.isStatus(),
-                savedEmployee.getCreatedAt(),
-                department.getName()
-	    		);
+		employee.setDepartment(department); // Assuming Many-to-One
+		address.setEmployee(employee);
+		employee.setAddress(address);
+
+		// Save employee and address
+		Employee savedEmployee = employeeRepository.save(employee);
+		employeeAddressRepository.save(address);
+
+		return new EmployeeDTO(savedEmployee.getId(), savedEmployee.getFirstName(), savedEmployee.getLastName(),
+				savedEmployee.getEmail(), savedEmployee.isStatus(), savedEmployee.getCreatedAt(), department.getName(),projectDTOs);
 	}
 
 	@Override
 	public List<EmployeeDTO> getAllEmployee(String sortBy) {
 		// TODO Auto-generated method stub
 		List<Employee> employees;
-		
+
 		switch (sortBy) {
 		case "firstName":
 			// return sorted by newest data
-			employees = employeeRepository.findAll().stream().sorted(Comparator.comparing(Employee::getFirstName)).toList();
+			employees = employeeRepository.findAll().stream().sorted(Comparator.comparing(Employee::getFirstName))
+					.toList();
 		case "createdAt":
 			// return sorted by newest data
-			employees = employeeRepository.findAll().stream().sorted(Comparator.comparing(Employee::getCreatedAt).reversed())
-					.toList();
+			employees = employeeRepository.findAll().stream()
+					.sorted(Comparator.comparing(Employee::getCreatedAt).reversed()).toList();
 		default:
 			employees = employeeRepository.findAll(); // Return unsorted list if no match
 		}
-		
+
 		return employees.stream().map(EmployeeMapper::toEmployeeDTO).toList();
 
 	}
@@ -118,21 +115,24 @@ public class EmployeeServiceImpl implements EmployeeService {
 	public EmployeeDTO getEmployeeById(long id) {
 		// TODO Auto-generated method stub
 
-		Employee savedEmployee = employeeRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Employee", "Id", id));
-		String departmentName = Optional.ofNullable(savedEmployee.getDepartment())
-                .map(Department::getName)
-                .orElse("No Department");
-		
-		return new EmployeeDTO(
-				savedEmployee.getId(),
-                savedEmployee.getFirstName(),
-                savedEmployee.getLastName(),
-                savedEmployee.getEmail(),
-                savedEmployee.isStatus(),
-                savedEmployee.getCreatedAt(),
-                departmentName
-				);
-				
+		Employee savedEmployee = employeeRepository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Employee", "Id", id));
+		String departmentName = Optional.ofNullable(savedEmployee.getDepartment()).map(Department::getName)
+				.orElse("No Department");
+		List<Project> projects = savedEmployee.getProjects();
+		List<ProjectDTO> projectDTOs = projects.stream()
+                .map(project -> new ProjectDTO(
+                		project.getId(),
+                		project.getName(),
+                		project.getDescription(),
+                		project.getStartDate(),
+                		project.getEndDate()
+                		))
+                .collect(Collectors.toList());
+
+		return new EmployeeDTO(savedEmployee.getId(), savedEmployee.getFirstName(), savedEmployee.getLastName(),
+				savedEmployee.getEmail(), savedEmployee.isStatus(), savedEmployee.getCreatedAt(), departmentName, projectDTOs);
+
 	}
 
 	@Override

@@ -1,6 +1,7 @@
 package com.example.demo.model.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 
 import com.example.demo.model.Department;
@@ -18,7 +19,7 @@ public class EmployeeRequest {
     private boolean status;
     private LocalDateTime createdAt;
     private Long departmentId;
-    private Long projectId;
+    private List<Long> projectIds;
     private AddressRequest address;
 
     @Data

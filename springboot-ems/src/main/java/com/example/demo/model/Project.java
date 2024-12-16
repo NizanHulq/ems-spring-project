@@ -38,7 +38,6 @@ public class Project {
         joinColumns = @JoinColumn(name = "project_id"),
         inverseJoinColumns = @JoinColumn(name = "employee_id")
     )
-//    private Set<Employee> employees;
     private List<Employee> employees = new ArrayList<>();
 
 	public Project(String name, String description, LocalDate startDate, LocalDate endDate) {

@@ -54,12 +54,6 @@ public class Employee {
     private Department department;
     
     @ManyToMany(mappedBy = "employees")
-//    @JoinTable(
-//    	    name = "employee_project",
-//    	    joinColumns = @JoinColumn(name = "employee_id"),
-//    	    inverseJoinColumns = @JoinColumn(name = "project_id")
-//    	)
-//    private Set<Project> projects;	
     private List<Project> projects = new ArrayList<>();
     
     @OneToOne(mappedBy = "employee", cascade = CascadeType.ALL, orphanRemoval = true)
