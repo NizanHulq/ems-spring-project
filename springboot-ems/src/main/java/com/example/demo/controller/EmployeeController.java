@@ -53,9 +53,6 @@ public class EmployeeController {
         List<EmployeeDTO> employees = employeeService.getAllEmployee(sortBy != null ? sortBy : "");
         return ResponseEntity.ok(employees);
     }
-//	public List<Employee> getAllEmployee() {
-//		return employeeService.getAllEmployee();
-//	}
 	
 	// build get employee by id Rest API
 	
